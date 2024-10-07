@@ -7,3 +7,6 @@
 - We use mapbox API:
 
 - We directly use 台北好停車 website API.
+
+- We design a temporary logo from picture online as below.
+![ParkFlow Preview](https://raw.githubusercontent.com/vaclisinc/vaclis-TownPass-Services/24ec17c43d856ad05349fb072df98daaa7e2178c/parkflow_preview.jpg)
