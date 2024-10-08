@@ -1,12 +1,6 @@
 # ParkFlow-backend-Service
 ParkFlow is a parking management system designed to enhance parking efficiency by providing real-time data on parking availability, notifications about parking areas, and intelligent Yellow Line parking services.
 
-
-## 需要更動的項目
-1.停車位的即時資訊，目前是去抓台北好停ParkFlow-backend-Service
-ParkFlow is a parking management system designed to enhance parking efficiency by providing real-time data on parking availability, notifications about parking areas, and intelligent Yellow Line parking services.
-
-
 ## 需要更動的項目
 1.停車位的即時資訊，目前是去抓[北市好停車](https://itaipeiparking.pma.gov.taipei/)的api，但臺北市政府應該有提供，可能需要請資訊局的人幫我們申請，網路上看應該是這個網站(https://www.dot.gov.taipei/cp.aspx?n=B99327E88E732290)。
 
