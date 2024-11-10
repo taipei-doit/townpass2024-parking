@@ -1,0 +1,4 @@
+/build/
+/android/.kotlin/
+/.flutter-plugins*
+/.dart_tool/
