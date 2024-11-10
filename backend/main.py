@@ -5,12 +5,13 @@ import requests
 import uvicorn
 import os
 from dotenv import load_dotenv
-from geopy.distance import geodesic
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
+from geospatialsearch import GeoSpatialSearch
 load_dotenv()
+geo_search = GeoSpatialSearch()
 
 app = FastAPI()
-with open('yellow_line.json', 'r', encoding='utf-8') as f:
-    yellow_line_data = json.load(f)
 origins = [
     "http://localhost",
     "http://localhost:5173",
@@ -24,6 +25,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 @app.get("/")
@@ -77,21 +79,35 @@ def strToCord(string):
 
 
 @app.get("/get_line")
-def get_line(lon:float, lat:float):
-    target_coord = (lat,lon)
-    nearby_coordinates = []
-    for item in yellow_line_data:
-        for coord in yellow_line_data[item]['coordinates']:
-            lon, lat = coord
-            distance = geodesic(target_coord, (lat, lon)).kilometers
-            if distance < 1:
-                nearby_coordinates.append(yellow_line_data[item])
+def get_line(lon: float, lat: float):
+    """
+    Search for lines within a 1 km radius of the given coordinates
+    """
+    try:
+        # Call the GeoSpatialSearch method to find nearby lines
+        results = geo_search.find_nearby_lines(lat, lon, search_radius_km=1.0)
 
-    return nearby_coordinates
+        # If no lines are found, return 204 No Content
+        if not results:
+            return JSONResponse(
+                status_code=204,
+                content={"status": "No Content", "data": []}
+            )
+
+        # Return the successful result with status code 200 OK
+        return JSONResponse(
+            status_code=200,
+            content={"status": "success", "data": results}
+        )
+
+    except Exception as e:
+        # Handle any potential errors
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 if __name__ == "__main__":
     ssl_keyfile=os.getenv("SSL_KEYFILE")
     ssl_certfile=os.getenv("SSL_CERTFILE")
     ssl_password=os.getenv("SSL_PASSWORD")
-    uvicorn.run(app, host="0.0.0.0", port=25569, ssl_keyfile=ssl_keyfile, ssl_certfile=ssl_certfile, ssl_keyfile_password=ssl_password)
+    uvicorn.run(app, host="localhost", port=8000, ssl_keyfile=ssl_keyfile, ssl_certfile=ssl_certfile, ssl_keyfile_password=ssl_password)
