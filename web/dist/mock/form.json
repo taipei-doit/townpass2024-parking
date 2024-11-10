@@ -1,0 +1,90 @@
+{
+  "data": {
+    "submit_target": {
+      "url": "https://www.gov.taipei/",
+      "method": "POST",
+      "content_type": "application/json"
+    },
+    "form_format": [
+      {
+        "type": "input",
+        "label": "違規駕駛人姓名",
+        "required": true,
+        "field": "name"
+      },
+      {
+        "type": "select",
+        "label": "承辦機關",
+        "required": true,
+        "field": "agency",
+        "default_option": "請選擇機關",
+        "options": [
+          {
+            "label": "交通事件裁決所",
+            "value": "交通事件裁決所"
+          }
+        ]
+      },
+      {
+        "type": "multiple_select",
+        "label": "申訴項目",
+        "required": true,
+        "field": "apply",
+        "options": [
+          {
+            "label": "車禍案件申訴",
+            "value": "車禍案件申訴"
+          },
+          {
+            "label": "車型車色不符",
+            "value": "車型車色不符"
+          }
+        ]
+      },
+      {
+        "type": "radio_group",
+        "label": "以E-MAIL寄發",
+        "required": true,
+        "field": "send_by_mail",
+        "options": [
+          {
+            "label": "是",
+            "value": "Y"
+          },
+          {
+            "label": "否",
+            "value": "N"
+          }
+        ]
+      },
+      {
+        "type": "textarea",
+        "label": "申訴內容",
+        "required": true,
+        "field": "content"
+      },
+      {
+        "type": "checkbox_group",
+        "label": "申請表單",
+        "required": true,
+        "field": "apply_form",
+        "options": [
+          {
+            "label": "現場圖",
+            "value": "現場圖"
+          },
+          {
+            "label": "現場照片",
+            "value": "現場照片"
+          }
+        ]
+      },
+      {
+        "type": "date_picker",
+        "label": "肇事日期",
+        "required": true,
+        "field": "date"
+      }
+    ]
+  }
+}

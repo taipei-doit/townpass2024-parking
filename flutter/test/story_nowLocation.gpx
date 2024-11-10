@@ -1,0 +1,14 @@
+<gpx>
+  <wpt lat="37.33182" lon="-122.03118">
+    <name>起點</name>
+    <time>2024-09-08T12:00:00Z</time>
+  </wpt>
+  <wpt lat="37.33182" lon="-122.03218">
+    <name>中間點</name>
+    <time>2024-09-08T12:00:10Z</time>
+  </wpt>
+  <wpt lat="37.33282" lon="-122.03218">
+    <name>終點</name>
+    <time>2024-09-08T12:00:15Z</time>
+  </wpt>
+</gpx>

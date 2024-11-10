@@ -1,0 +1,131 @@
+{
+  "//": "Q & A • 常見問題",
+  "data": [
+    {
+      "name": "登入註冊",
+      "pageSize": 10,
+      "list": [
+        {
+          "id": "q1-1",
+          "is_show_front_page": false,
+          "category": "登入註冊",
+          "name": "一定需要實名認證才能加入台北通會員？",
+          "name_en": "Does signing up for TaipeiPASS membership require real name verification?",
+          "content": "台北通會員分為一般會員與金質會員（實名認證會員），建議您申請金質會員享有完整服務。",
+          "content_en": "\nTaipeiPASS membership is divided into regular and gold members (those whose identity has been verified). Please acquire gold membership for more comprehensive service."
+        },
+        {
+          "id": "q1-2",
+          "is_show_front_page": true,
+          "category": "登入註冊",
+          "name": "已透過悠遊付註冊台北通會員，請問如何登入？",
+          "name_en": "I have signed up for EasyWallet. How do I log in?",
+          "content": "透過悠遊付APP註冊完成的台北通會員將取得一組帳號及密碼，如您忘記當初設定的密碼，請透過「忘記密碼」功能進行密碼變更。",
+          "content_en": "\nIf your registration was successful, you would have received an account and password. If you forgot your pasword, please proceed to \"Forgot Password\" function and change your password accordingly."
+        },
+        {
+          "id": "q1-3",
+          "is_show_front_page": true,
+          "category": "登入註冊",
+          "name": "已透過市民服務大平台或身分驗證申請註冊加入會員，超過時間沒有收到審核通知，怎麼辦？",
+          "name_en": "What should I do if I applied for membership through Citizen Grand Platform or Identity Verification Procedure but have not received the results of evaluation by the expected deadline?",
+          "content": "請透過登入市民服務大平台-線上進度查詢服務進度，或致電客服(1999外縣市02-27208889)轉8585。\n身分證驗證：致電客服(1999外縣市02-27208889)轉8585。",
+          "content_en": "\n\n\nFor those applying for gold membership via Citizen Grand Platform: Please inquire online for the progress of your request, or call customer service via 1999 Citizens' Hotline (dial 02-2720-8889 for those calling outside of Taipei City), ext. 8585.\nIdentity Verification: Please call customer service by dialing 1999 (dial 02-2720-8889 for those calling outside of Taipei City), ext. 8585."
+        },
+        {
+          "id": "q1-4",
+          "is_show_front_page": true,
+          "category": "登入註冊",
+          "name": "手機門號驗證出現身分證字號正確，生日錯誤的錯誤訊息。這是什麼意思?",
+          "name_en": "During mobile phone verification, it says that my ID number is correct but my birth date info is wrong. What does this mean?",
+          "content": "出現此錯誤訊息，多數是您留存於電信公司的生日資料有錯誤或缺漏。請您先致電電信公司客服查詢相關會員資料。若和電信公司比對資料無誤，請您來電1999(外縣市02-27208889)轉8585將有專人為您服務。",
+          "content_en": "\nIn most cases, this error message appears because there's an error with your birth date saved at the Telecom company's database. Please call your telecom provider to doublecheck your membership data. If there is no problem with your data at the telecom provider, please dial 1999 (or 02-2720-8889 when calling from outside of Taipei City), ext. 8585."
+        }
+      ]
+    },
+    {
+      "name": "卡證",
+      "pageSize": 10,
+      "list": [
+        {
+          "id": "q2-1",
+          "is_show_front_page": false,
+          "category": "卡證",
+          "name": "台北通是否有提供申請實體卡片的服務？",
+          "name_en": "Can I apply for a TaipeiPASS physical card?",
+          "content": "台北通為虛擬卡證，目前只有特殊身分核發實體卡證。",
+          "content_en": "\nTaipeiPASS is a virtual membership card which integrates multiple functions. This helps to save you the trouble of carrying around multiple cards in your wallet. Currently, the option of a physical version of the card is reserved for individuals with specific needs."
+        }
+      ]
+    },
+    {
+      "name": "優惠",
+      "pageSize": 10,
+      "list": [
+        {
+          "id": "q3-1",
+          "is_show_front_page": true,
+          "category": "優惠",
+          "name": "如何使用優惠券？",
+          "name_en": "How can I access the coupons?",
+          "content": "在台北通特約商家消費時，出示APP優惠券畫面即可享有專屬優惠。超簡單使用方式，請參考操作步驟。",
+          "content_en": "\nWhen you shop at any of the TaipeiPASS partner stores, simply show the coupon with your app to enjoy the related discount. It is extremely simple to use. Refer to the following instructions."
+        },
+        {
+          "id": "q3-2",
+          "is_show_front_page": true,
+          "category": "優惠",
+          "name": "如何獲得優惠券？ ",
+          "name_en": "How can I obtain the discount coupons?",
+          "content": "下載台北通App，方能使用優惠，點選「優惠」主題，點選「優惠券」即可查看所有優惠商家。看到喜歡的優惠，可以按「+我的票夾」領取優惠或直接點立即使用票券。詳細操作請查看操作步驟。",
+          "content_en": "\nDowload TaipeiPASS app to obtain discounts and bargains. Select \"Perk\" -> \"Coupon\" to check out our partner stores. If you see a bargain you like, simply press \"+ Keep it\" to add it to your inventory or \"Use it\" to use the coupon. For details, please refer to instructions."
+        }
+      ]
+    },
+    {
+      "name": "服務",
+      "pageSize": 10,
+      "list": [
+        {
+          "id": "q4-1",
+          "is_show_front_page": true,
+          "category": "服務",
+          "name": "台北通帳號授權使用市府其他數位平台，可以取消使用授權嗎？",
+          "name_en": "'ve authorized my TaipeiPASS account to access other digital platforms of the city government. Can I cancel the authorization?",
+          "content": "請您登入<a href=\"https://www.taipei-pass.com\" style=\"color: #0000FF;\">台北通官方網站</a>，就可以在會員中心的「安全性」-「授權第三方應用」列表中，選擇取消特定服務的授權。",
+          "content_en": "\nPlease login to the <a href=\"https://www.taipei-pass.com\" style=\"color: #0000FF;\">website of TaipeiPASS</a>. In the Membership Center, select \"Security\" -> \"Authorize Third Party Access\" and cancel the authorization for the specific service from the list."
+        }
+      ]
+    },
+    {
+      "name": "帳單",
+      "pageSize": 10,
+      "list": [
+        {
+          "id": "q5-1",
+          "is_show_front_page": false,
+          "category": "帳單",
+          "name": "剛完成停車費繳納，台北通的帳單紀錄為何沒有顯示紀錄？",
+          "name_en": "I just paid my parking fee, but why isn't the paid bill displayed in the records?",
+          "content": "停車費帳單及繳納資訊非立即更新，請以停管處回覆之即時結果為準。\n如有繳費問題請逕洽停管處客服 02-2726-9600。",
+          "content_en": "\nAs parking fee payment information do not receive realtime updates, all results will be based on the updates by the Parking Administration Office. For any questions on parking fee payments, please call the agency at 02-2726-9600."
+        }
+      ]
+    },
+    {
+      "name": "下載安裝",
+      "pageSize": 10,
+      "list": [
+        {
+          "id": "q6-1",
+          "is_show_front_page": false,
+          "category": "下載安裝",
+          "name": "台北通建議使用環境？使用行動裝置有哪些？",
+          "name_en": "What are the specs and requirment for TaipeiPASS app? What mobile devices can I install it on?",
+          "content": "台北通APP目前提供Android與iOS系統兩個版本，安裝前請先確認智慧型手機之作業系統規格，目前支援 iOS 13.0以上(含)及Android 7.0以上(含)。",
+          "content_en": "\nTaipeiPASS currently offers the Andriod version and iOS version. Please double check the specs of your mobile phone before installing the app. Currently, the app runs on systems including iOS 13.0 (or later versions) and Android 7.0 (or later versions)"
+        }
+      ]
+    }
+  ]
+}
