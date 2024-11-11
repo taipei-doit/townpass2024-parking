@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "devbun": "bun x --bun vite",
     "host": "vite --host",
     "build": "run-p type-check \"build-only {@}\" --",
+    "buildbun": "bun x --bun vite build",
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
@@ -14,17 +16,13 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
-    "@googlemaps/js-api-loader": "^1.16.6",
-    "@googlemaps/markerclusterer": "^2.5.3",
     "@headlessui/vue": "1.7.22",
     "@popperjs/core": "2.11.8",
-    "@types/google.maps": "^3.55.10",
     "axios": "^1.7.2",
     "mapbox-gl": "^3.6.0",
     "pinia": "2.1.7",
     "postcss-import": "^16.1.0",
     "v-calendar": "3.1.2",
-    "vite-plugin-mkcert": "^1.17.6",
     "vue": "3.4.21",
     "vue-router": "4.3.0"
   },
