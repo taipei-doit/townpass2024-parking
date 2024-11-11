@@ -2,197 +2,279 @@
   <div ref="mapContainer" class="map-container"></div>
 </template>
 
-<script>
-import { useHandleConnectionData } from '../../composables/useHandleConnectionData';
-import { useConnectionMessage } from '../../composables/useConnectionMessage';
+<script lang="ts">
+import {useHandleConnectionData} from '@/composables/useHandleConnectionData';
+import {useConnectionMessage} from '@/composables/useConnectionMessage';
 import calcCrow from '@/utils/calcCrow';
+import {Marker, Map, GeoJSONSource} from 'mapbox-gl';
 import mapboxgl from 'mapbox-gl';
 import axios from 'axios';
 
-let thisI;
-let map;
-let userCoord = [121.5624999, 25.0325917];
-const markers = [];
+type Coordinate = { lat: number, lng: number }
 
-mapboxgl.accessToken =
-  'pk.eyJ1IjoiZjc0MTE0NzYwIiwiYSI6ImNtMHJyenV3eTBjOGQyaXNicDFsbXU2YzIifQ.fhoguJDc6TfWAGwn471Hog';
+/**
+ * [longitude, latitude]
+ */
+type CoordinateArr = [number, number];
+
+type ParkingLotData = {
+  carRemainderNum: number,
+  carTotalNum: number,
+  chargeStationTotalNum: number,
+  lat: number,
+  lon: number,
+  parkName: string,
+  payex: string
+}
+
+type StreetParkingGridData = {
+  lat: number,
+  lon: number,
+  available: boolean,
+  wkt: Coordinate[],
+}
+
+type StreetLineData = {
+  coord: Coordinate[]
+  t: 1 | 2 | 3,
+}
+
+type MapElementData = {
+  map?: any,
+  markers: any[],
+  userCoord: CoordinateArr,
+  parkingLotData?: ParkingLotData[],
+  parkingGridData?: StreetParkingGridData[],
+  lineData?: StreetLineData[]
+}
+
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_API_KEY;
 export default {
   emits: ['point-click'],
   props: ['destPos'],
   watch: {
     destPos: {
       handler: function (val) {
-        if (!val) return;
+        if (val === null) {
+          this.displayMapParkingInfo();
+          return;
+        }
         console.log('destPos:', val);
-        clearAllLayer();
-        makeMarker('', '#26a7ac', 25, [val.lng, val.lat], 1, null);
-        zoomToFeat([userCoord, [val.lng, val.lat]]);
+        this.clearMapParkingInfo();
+        this.makeMarker('', '#26a7ac', 25, [val.lng, val.lat], 1, null);
+        this.zoomToFeat([this.userCoord, [val.lng, val.lat]]);
       },
       deep: true,
       immediate: true
     }
   },
+  data: (): MapElementData => ({
+    markers: [],
+    userCoord: [121.5624999, 25.0325917]
+  }),
   mounted() {
-    thisI = this;
-    map = this.map = new mapboxgl.Map({
-      container: this.$refs.mapContainer,
+    const map = new Map({
+      container: this.$refs.mapContainer as HTMLElement,
       style: 'mapbox://styles/mapbox/light-v11', // Replace with your preferred map style
       center: [121.5624999, 25.0325917],
       zoom: 15
     });
+    this.map = map;
+    map.on('dragend', () => this.updateParkingData().then(this.displayMapParkingInfo));
 
-    map.on('dragend', (e) => {
-      console.log('move end:', e);
-      getParkingData();
-    });
-
-    map.on('click', 'yellowLine', function (e) {
+    map.on('click', 'roadLine', (e) => {
       // alert('click yellow line');
-      thisI.$emit('point-click', {
-        name: 'Yellow Line',
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: ['roadLine']
+      });
+      const type = features[0].properties?.type;
+      this.$emit('point-click', {
+        name: type === 1 ? '紅線' : type === 2 ? '黃線' : '其他',
         lat: e.lngLat.lat,
         lng: e.lngLat.lng,
         remainingSpace: 1,
         price: '',
-        distance: calcCrow(e.lngLat.lat, e.lngLat.lng, userCoord[1], userCoord[0]),
+        distance: calcCrow(e.lngLat.lat, e.lngLat.lng, this.userCoord[1], this.userCoord[0]),
         type: 'yellow_line'
       });
     });
 
-    let getCurrentPosCallback = null;
-    let watchPositionId = 0;
-    const watchPositionListeners = {};
+    const navigateParkingGrid = (info: CoordinateArr, remaining: number) => {
+      console.log(info)
+      this.$emit('point-click', {
+        name: '停車格',
+        lat: info[1],
+        lng: info[0],
+        remainingSpace: remaining,
+        price: 'PRICE',
+        distance: calcCrow(info[1], info[0], this.userCoord[1], this.userCoord[0]),
+        type: 'park'
+      });
+    }
 
+    map.on('click', 'parkingGridPoint', (e) => {
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: ['parkingGridPoint']
+      });
+      if (!features || !features[0])
+        return;
+      const clusterProp = features[0].properties;
+      const clusterId = clusterProp?.cluster_id;
+      (map.getSource('parkingGridPoint_src') as GeoJSONSource)
+          .getClusterExpansionZoom(clusterId, (error: any, zoom: number) => {
+            if (error) return;
+            if (zoom > 16) {
+              console.log(features[0].properties)
+              navigateParkingGrid(features[0].geometry.coordinates, clusterProp?.point_count);
+              return;
+            }
+
+            map.easeTo({
+              center: features[0].geometry.coordinates,
+              zoom: zoom
+            });
+          });
+    });
+
+    map.on('click', 'parkingGridPointSingle', (e) => {
+      navigateParkingGrid([e.lngLat.lng, e.lngLat.lat], 1);
+    });
+
+    let mapBoxCurrentPosCallback: null | PositionCallback;
+    const watchPositionListeners: { [key: number]: PositionCallback } = {};
+
+    // Implement location tracker for mapbox
     map.addControl(
-      new mapboxgl.GeolocateControl({
-        geolocation: { getCurrentPosition, watchPosition, clearWatch },
-        trackUserLocation: true
-      })
+        new mapboxgl.GeolocateControl({
+          geolocation: {getCurrentPosition, watchPosition, clearWatch},
+          trackUserLocation: true
+        })
     );
 
-    function getCurrentPosition(success, error, options) {
+    function getCurrentPosition(success: PositionCallback, error?: PositionErrorCallback, options?: PositionOptions) {
       console.log('Get location');
-      getCurrentPosCallback = success;
+      mapBoxCurrentPosCallback = success;
       useConnectionMessage('location', null);
     }
 
-    function watchPosition(success, error, options) {
+    function watchPosition(success: PositionCallback, error?: PositionErrorCallback, options?: PositionOptions) {
       // new mapboxgl.Popup({ closeOnClick: false })
       //   .setLngLat(map.getCenter())
       //   .setHTML('<h1>' + 'stratWatch' + '</h1>')
       //   .addTo(map);
 
-      const id = ++watchPositionId;
-      const interval = setInterval(() => {
+      const watchId = setInterval(() => {
         useConnectionMessage('location', null);
       }, 4000);
       useConnectionMessage('location', null);
-      watchPositionListeners[id] = { success, interval };
-      return id;
+      watchPositionListeners[watchId] = success;
+      return watchId;
     }
 
-    function clearWatch(id) {
+    function clearWatch(watchId: number) {
       // new mapboxgl.Popup({ closeOnClick: false })
       //   .setLngLat(map.getCenter())
       //   .setHTML('<h1>' + 'clearWatch' + '</h1>')
       //   .addTo(map);
-      const listener = watchPositionListeners[id];
-      clearInterval(listener.interval);
-      delete watchPositionListeners[id];
+      clearInterval(watchId);
+      delete watchPositionListeners[watchId];
     }
 
     useHandleConnectionData((i) => {
-      i = JSON.parse(i.data);
-      const name = i.name;
-      const data = i.data;
-      const geoPos = { coords: data };
+      const locData = JSON.parse(i.data);
+      const name = locData.name;
+      const data = locData.data;
+      const geoPos: GeolocationPosition = {coords: data, timestamp: new Date().getTime()};
 
-      userCoord = [data.longitude, data.latitude];
-      if (getCurrentPosCallback) {
-        getCurrentPosCallback(geoPos);
-        getCurrentPosCallback = null;
+      this.userCoord = [data.longitude, data.latitude];
+      if (mapBoxCurrentPosCallback) {
+        mapBoxCurrentPosCallback(geoPos);
+        mapBoxCurrentPosCallback = null;
       }
-      Object.values(watchPositionListeners).forEach((i) => i.success(geoPos));
+      Object.values(watchPositionListeners).forEach((callback) => callback(geoPos));
     });
 
-    let updating = false;
+    // Get current location data
+    this.updateParkingData().then(this.displayMapParkingInfo);
+  },
+  unmounted() {
+    this.map!.remove();
+    this.map = null;
+  },
+  methods: {
+    makeMarker(text: string, color: string, size: number, cord: CoordinateArr, remaining: number, info: null | ParkingLotData) {
+      let el = document.createElement('div');
+      el.className = 'marker';
+      // Set text and size
+      let sp = document.createElement('span');
+      sp.innerHTML = '<b>' + text + '</b>';
+      sp.style.background = color;
+      sp.style.width = sp.style.height = size + 'px';
+      el.append(sp);
 
-    getParkingData();
+      const marker = new Marker(el).setLngLat(cord).addTo(this.map!);
+      if (info)
+        marker.getElement().addEventListener('click', () => {
+          this.$emit('point-click', {
+            name: info.parkName,
+            lat: info.lat,
+            lng: info.lon,
+            remainingSpace: remaining,
+            price: info.payex,
+            distance: calcCrow(info.lat, info.lon, this.userCoord[1], this.userCoord[0]),
+            type: 'park'
+          });
+        });
+      this.markers.push(marker);
+      return marker;
+    },
+    clearMapParkingInfo() {
+      this.removeSourceAndLayer('parkingLot');
+      this.removeSourceAndLayer('parkingGrid');
+      this.removeLayer('parkingGridPointSingle');
+      this.removeLayer('parkingGridPointText');
+      this.removeSourceAndLayer('parkingGridPoint');
+      this.removeSourceAndLayer('roadLine');
+      this.markers.forEach((i) => i.remove());
+    },
+    async updateParkingData() {
+      console.log('Update parking data');
+      let center = this.map!.getCenter();
+      const {parkData, lineData} = await getParkingData(center);
+      this.parkingGridData = parkData.parkingGrid;
+      this.parkingLotData = parkData.parkingLot;
+      this.lineData = lineData.data;
+    },
+    displayMapParkingInfo() {
+      if (!this.parkingGridData || !this.parkingLotData || !this.lineData)
+        return;
+      console.log('Display parking data');
+      this.markers.forEach((i) => i.remove());
 
-    async function getParkingData() {
-      if (updating) return;
-      updating = true;
-
-      let center = map.getCenter();
-      let lon = center.lng,
-        lat = center.lat;
-      let d0 = axios.get(`https://api.wavjaby.nckuctf.org:25569?lon=${lon}&lat=${lat}`);
-      let d1 = axios.get(`https://api.wavjaby.nckuctf.org:25569/get_line?lon=${lon}&lat=${lat}`);
-
-      d0 = await (await d0).data;
-      d1 = await (await d1).data;
-      updating = false;
-
-      markers.forEach((i) => i.remove());
-
-      console.log(d0);
-      addPoints(
-        'parkingLot',
-        d0.parkingLot.map((i) => ({
-          type: 'Feature',
-          properties: {
-            color: '#ff0000'
-          },
-          geometry: {
-            type: 'Point',
-            coordinates: [i.lon, i.lat]
-          }
-        })),
-        1,
-        3
-      );
-      addPolygon(
-        'parkingGrid',
-        d0.parkingGrid.map((i) => ({
-          type: 'Feature',
-          properties: {
-            color: i.available ? '#ccff33' : '#e07a5f'
-          },
-          geometry: {
-            type: 'Polygon',
-            coordinates: [i.wkt]
-          }
-        })),
-        1
-      );
-      // add markers to map
-      d0.parkingGrid.forEach(
-        (i) => i.available && makeMarker('1', '#26a7ac', 25, [i.lon, i.lat], 1, i)
-      );
-      d0.parkingLot
-        .sort((a, b) => a.carRemainderNum - b.carRemainderNum)
-        .forEach((i) =>
-          makeMarker(
-            Math.max(0,i.carRemainderNum),
-            i.carRemainderNum > 0 ? '#693' : '#f20',
-            i.carRemainderNum === 0 ? 20 : Math.min(50 * (i.carRemainderNum / 1000) + 25, 60),
-            [i.lon, i.lat],
-            i.carRemainderNum,
-            i
-          )
-        );
-      console.log(d1);
-      let featuresPath = d1.map((i) => ({
+      const parkingGridData = this.parkingGridData.map((i) => ({
         type: 'Feature',
         properties: {
-          color: '#f0cf65'
+          color: i.available ? '#51bbd6' : '#e07a5f'
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [i.wkt]
+        }
+      }));
+      this.addPolygon('parkingGrid', parkingGridData, 1);
+
+      const roadLinePath = this.lineData.map((i) => ({
+        type: 'Feature',
+        properties: {
+          type: i.t,
+          color: i.t === 1 ? '#d74b24' : '#f0cf65'
         },
         geometry: {
           type: 'LineString',
-          coordinates: i.coordinates
+          coordinates: i.coord
         }
       }));
-      addSourceAndLayer('yellowLine', featuresPath, {
+      this.addSourceAndLayer('roadLine', 0, 0, roadLinePath, {
         type: 'line',
         layout: {
           'line-join': 'round',
@@ -200,112 +282,144 @@ export default {
         },
         paint: {
           'line-color': ['get', 'color'],
-          'line-width': 4
+          'line-width': 5
         }
       });
-    }
-  },
-  unmounted() {
-    this.map.remove();
-    this.map = null;
+
+      // add markers to map
+      const availableParkingGridPoint = this.parkingGridData.filter(i => i.available).map((i) => ({
+        type: 'Feature',
+        properties: {
+          point_count: 1
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: [i.lon, i.lat]
+        }
+      }));
+      this.removeLayer('parkingGridPointSingle');
+      this.removeLayer('parkingGridPointText');
+      this.addSourceAndLayer('parkingGridPoint', 50, 20, availableParkingGridPoint, {
+        type: 'circle',
+        filter: ['>', 'point_count', 1],
+        layout: {},
+        paint: {
+          'circle-color': [
+            'step',
+            ['get', 'point_count'],
+            '#f1f075', 5, '#51bbd6', 15, '#51d65c',
+          ],
+          'circle-radius': [
+            'step',
+            ['get', 'point_count'],
+            15, 5, 20, 15, 30
+          ],
+          'circle-opacity': 0.9
+        }
+      });
+      this.addLayer('parkingGridPoint', 'parkingGridPointSingle', {
+        type: 'circle',
+        filter: ['==', 'point_count', 1],
+        paint: {
+          'circle-color': '#11b4da',
+          'circle-radius': 10,
+          'circle-stroke-width': 1,
+          'circle-stroke-color': '#fff',
+          'circle-opacity': 0.9
+        }
+      });
+      this.addLayer('parkingGridPoint', 'parkingGridPointText', {
+        type: 'symbol',
+        filter: ['has', 'point_count'],
+        layout: {
+          'text-field': ['get', 'point_count_abbreviated'],
+          'text-size': 16,
+        },
+        paint: {
+          'text-color': '#ffffff',
+          'text-halo-color': '#000000',
+          'text-halo-width': 0.5
+        }
+      });
+
+      // this.parkData.parkingGrid.forEach(
+      //     (i) => i.available && this.makeMarker('1', '#26a7ac', 25, [i.lon, i.lat], 1, i)
+      // );
+      this.parkingLotData
+          .sort((a, b) => a.carRemainderNum - b.carRemainderNum)
+          .forEach((i) => this.makeMarker(
+              Math.max(0, i.carRemainderNum).toString(),
+              i.carRemainderNum > 0 ? '#693' : '#f20',
+              i.carRemainderNum === 0 ? 20 : Math.min(50 * (i.carRemainderNum / 1000) + 25, 60),
+              [i.lon, i.lat],
+              i.carRemainderNum,
+              i
+          ));
+    },
+    zoomToFeat(coordinates: CoordinateArr[]) {
+      const bounds = coordinates.reduce(
+          function (bounds, coord) {
+            return bounds.extend(coord);
+          },
+          new mapboxgl.LngLatBounds(coordinates[0], coordinates[0])
+      );
+
+      this.map!.fitBounds(bounds, {
+        padding: 100
+      });
+    },
+    removeSourceAndLayer(id: string) {
+      const srcId = id + '_src';
+      if (this.map!.getLayer(id)) this.map!.removeLayer(id);
+      if (this.map!.getSource(srcId)) this.map!.removeSource(srcId);
+    },
+    addSourceAndLayer(id: string, clusterRadius: number, clusterMaxZoom: number, features: any, layerConfig: any) {
+      const srcId = id + '_src';
+      if (this.map!.getLayer(id)) this.map!.removeLayer(id);
+      if (this.map!.getSource(srcId)) this.map!.removeSource(srcId);
+      this.map!.addSource(srcId, {
+        type: 'geojson',
+        cluster: clusterRadius != 0,
+        clusterRadius: clusterRadius,
+        clusterMaxZoom: clusterMaxZoom,
+        data: {type: 'FeatureCollection', features: features}
+      });
+      layerConfig.id = id;
+      layerConfig.source = srcId;
+      this.map!.addLayer(layerConfig);
+    },
+    removeLayer(id: string) {
+      if (this.map!.getLayer(id))
+        this.map!.removeLayer(id);
+    },
+    addLayer(sourceId: string, id: string, layerConfig: any) {
+      const srcId = sourceId + '_src';
+      if (this.map!.getLayer(id)) this.map!.removeLayer(id);
+      layerConfig.id = id;
+      layerConfig.source = srcId;
+      this.map!.addLayer(layerConfig);
+    },
+    addPolygon(id: string, features: any, opacity: number) {
+      this.addSourceAndLayer(id, 0, 0, features, {
+        type: 'fill',
+        layout: {},
+        paint: {
+          'fill-opacity': opacity,
+          'fill-color': ['get', 'color']
+        }
+      });
+    },
   }
 };
 
-function clearAllLayer() {
-  removeSourceAndLayer('parkingLot');
-  removeSourceAndLayer('parkingGrid');
-  removeSourceAndLayer('yellowLine');
-  markers.forEach((i) => i.remove());
-}
+async function getParkingData(center: Coordinate) {
+  const lon = center.lng, lat = center.lat;
+  const parkDataFetch = axios.get(`${import.meta.env.VITE_BACKEND_URL}?lon=${lon}&lat=${lat}`);
+  const lineDataFetch = axios.get(`${import.meta.env.VITE_BACKEND_URL}/get_line?lon=${lon}&lat=${lat}`);
 
-function zoomToFeat(coordinates) {
-  // based on this: https://www.mapbox.com/mapbox-gl-js/example/zoomto-linestring/
-
-  // Pass the first coordinates in the LineString to `lngLatBounds` &
-  // wrap each coordinate pair in `extend` to include them in the bounds
-  // result. A variation of this technique could be applied to zooming
-  // to the bounds of multiple Points or Polygon geomteries - it just
-  // requires wrapping all the coordinates with the extend method.
-  var bounds = coordinates.reduce(
-    function (bounds, coord) {
-      return bounds.extend(coord);
-    },
-    new mapboxgl.LngLatBounds(coordinates[0], coordinates[0])
-  );
-
-  map.fitBounds(bounds, {
-    padding: 100
-  });
-}
-
-function makeMarker(text, color, size, cord, remaining, info) {
-  let el = document.createElement('div');
-  el.className = 'marker';
-  // Set text and size
-  let sp = document.createElement('span');
-  sp.innerHTML = '<b>' + text + '</b>';
-  sp.style.background = color;
-  sp.style.width = sp.style.height = size + 'px';
-  el.append(sp);
-
-  const marker = new mapboxgl.Marker(el).setLngLat(cord).addTo(map);
-  if(info)
-  marker.getElement().addEventListener('click', () => {
-    thisI.$emit('point-click', {
-      name: info.parkName,
-      lat: info.lat,
-      lng: info.lon,
-      remainingSpace: remaining,
-      price: info.payex,
-      // distance: userCoord?calcCrow(info.lat, info.lon, userCoord[1], userCoord[0]):'--',
-      distance: calcCrow(info.lat, info.lon, userCoord[1], userCoord[0]),
-      type: 'park'
-    });
-  });
-  markers.push(marker);
-  return marker;
-}
-
-function removeSourceAndLayer(id) {
-  const srcId = id + '_src';
-  if (map.getLayer(id)) map.removeLayer(id);
-  if (map.getSource(srcId)) map.removeSource(srcId);
-}
-
-function addSourceAndLayer(id, features, layerConfig) {
-  const srcId = id + '_src';
-  if (map.getLayer(id)) map.removeLayer(id);
-  if (map.getSource(srcId)) map.removeSource(srcId);
-  map.addSource(srcId, {
-    type: 'geojson',
-    data: { type: 'FeatureCollection', features: features }
-  });
-  layerConfig.id = id;
-  layerConfig.source = srcId;
-  map.addLayer(layerConfig);
-}
-
-function addPoints(id, features, opacity, radius) {
-  addSourceAndLayer(id, features, {
-    type: 'circle',
-    layout: {},
-    paint: {
-      'circle-opacity': opacity,
-      'circle-color': ['get', 'color'],
-      'circle-radius': radius
-    }
-  });
-}
-
-function addPolygon(id, features, opacity) {
-  addSourceAndLayer(id, features, {
-    type: 'fill',
-    layout: {},
-    paint: {
-      'fill-opacity': opacity,
-      'fill-color': ['get', 'color']
-    }
-  });
+  const parkData = await (await parkDataFetch).data;
+  const lineData = await (await lineDataFetch).data;
+  return {parkData, lineData};
 }
 </script>
 
