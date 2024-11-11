@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import BaseButton from '@/components/atoms/BaseButton.vue';
-import { computed, ref, watch } from 'vue';
+import {computed, ref, watch} from 'vue';
 import BaseInput from '../atoms/BaseInput.vue';
-import type { Point } from '@/views/ParkingService.vue';
+import type {Point} from '@/views/ParkingService.vue';
+
 const props = defineProps<{
   parkName: string | null;
   remainingSpace: number | null;
@@ -14,14 +15,14 @@ const props = defineProps<{
   leaveEarly: boolean | null;
   billingTime: string | null;
   display:
-    | 'browsing_map'
-    | 'navigator_park'
-    | 'navigator_yellow_line'
-    | 'navigating'
-    | 'park_confirm'
-    | 'park_location_memo'
-    | 'park_set_timer'
-    | 'park_timer';
+      | 'browsing_map'
+      | 'navigator_park'
+      | 'navigator_road_line'
+      | 'navigating'
+      | 'park_confirm'
+      | 'park_location_memo'
+      | 'park_set_timer'
+      | 'park_timer';
 }>();
 const emit = defineEmits([
   'button-go',
@@ -36,13 +37,13 @@ const emit = defineEmits([
   'button-confirm-park',
   'button-leave'
 ]);
-const isNavigatorPark = computed(() => props.display === 'navigator_park');
-const isNavigatorYellowLine = computed(() => props.display === 'navigator_yellow_line');
+const isNavigatorPark = computed(() => props.display === 'navigator_park' || props.display === 'browsing_map');
+const isNavigatorRoadLine = computed(() => props.display === 'navigator_road_line');
 const isNavigating = computed(() => props.display === 'navigating');
 const isParkConfirm = computed(() => props.display === 'park_confirm');
 const isParkLocationMemo = computed(() => props.display === 'park_location_memo');
 const isParkSetTimer = computed(() => props.display === 'park_set_timer');
-const isParkTimer = computed(() => props.display === 'park_timer');
+const isParkTimer = computed(() => props.display === 'park_timer' || props.display === 'browsing_map');
 const warningThreshold = computed(() => (props.leaveEarly ? 1 : 5));
 const pricePerHour = computed(() => {
   const tryPrice = parseFloat(props.price?.replace('元/', '') ?? '0');
@@ -54,17 +55,17 @@ const pricePerHour = computed(() => {
 
 const parkTimer = ref(0);
 const parkMemo = ref('');
-const parkCountup = ref(props.timePassed || 0);
+const parkCountUp = ref(props.timePassed || 0);
 const counterHandler = ref(0);
 watch(
-  () => props.display,
-  (newVal: string) => {
-    if (newVal === 'park_timer' && counterHandler.value === 0) {
-      counterHandler.value = setInterval(() => {
-        parkCountup.value += 1;
-      }, 1000);
+    () => props.display,
+    (newVal: string) => {
+      if (newVal === 'park_timer' && counterHandler.value === 0) {
+        counterHandler.value = setInterval(() => {
+          parkCountUp.value += 1;
+        }, 1000);
+      }
     }
-  }
 );
 
 const setParkTimer = (value: number) => {
@@ -93,8 +94,8 @@ const formattedTime = (time: number) => {
 </script>
 <template>
   <div
-    class="goto-card flex flex-col absolute bottom-0 bg-white rounded-lg p-4 mb-8"
-    :class="{ show: props.display !== 'browsing_map' }"
+      class="goto-card flex flex-col absolute bottom-0 bg-white rounded-lg p-4 mb-8"
+      :class="{ show: props.display !== 'browsing_map' }"
   >
     <!-- 停車場 -->
     <div v-if="isNavigatorPark" class="container">
@@ -113,40 +114,30 @@ const formattedTime = (time: number) => {
         </div>
         <div class="flex-row max-w-48 justify-between">
           <p>距離：</p>
-          <p class="text-gray-500">{{ props.distance }} 公里</p>
+          <p class="text-gray-500">{{ props.distance?.toFixed(2) }} 公里</p>
         </div>
       </div>
       <div class="button-set">
-        <BaseButton class="button button-go" @click="$emit('button-go', props.pos)"
-          >前往</BaseButton
-        >
-        <BaseButton outline class="button button-back" @click="$emit('button-back')">
-          取消
-        </BaseButton>
+        <BaseButton class="button button-go" @click="$emit('button-go', props.pos)">前往</BaseButton>
+        <BaseButton outline class="button button-back" @click="$emit('button-back')">取消</BaseButton>
       </div>
     </div>
-    <!-- 黃線停車 -->
-    <div v-else-if="isNavigatorYellowLine" class="container">
-      <h2 class="text-2xl w-full text-center p-2">黃線</h2>
+    <!-- 路邊停車 -->
+    <div v-else-if="isNavigatorRoadLine" class="container">
+      <h2 class="text-2xl w-full text-center p-2">{{props.parkName}}</h2>
       <div class="align-center text-center w-2x pt-2 pb-4">
-        <p>距離：{{ props.distance }}公里</p>
+        <p>距離：{{ props.distance?.toFixed(2) }}公里</p>
       </div>
       <div class="button-set">
-        <BaseButton class="button button-go" @click="$emit('button-go', props.pos)"
-          >前往</BaseButton
-        >
-        <BaseButton outline class="button button-back" @click="$emit('button-back')">
-          返回
-        </BaseButton>
+        <BaseButton class="button button-go" @click="$emit('button-go', props.pos)">前往</BaseButton>
+        <BaseButton outline class="button button-back" @click="$emit('button-back')">返回</BaseButton>
       </div>
     </div>
     <!-- 導航中 -->
     <div v-else-if="isNavigating" class="container">
       <h2 class="text-2xl w-full text-center p-2">導航中</h2>
       <div class="button-set p-2">
-        <BaseButton outline class="button" @click="$emit('button-cancel-navigating')"
-          >取消導航</BaseButton
-        >
+        <BaseButton outline class="button" @click="$emit('button-cancel-navigating')">取消導航</BaseButton>
         <BaseButton class="button" @click="$emit('button-demo-directly-arrive')">到達</BaseButton>
       </div>
     </div>
@@ -155,18 +146,14 @@ const formattedTime = (time: number) => {
       <h2 class="text-2xl w-full pb-6 pt-2 text-center">是否停好車了？</h2>
       <div class="button-set">
         <BaseButton class="button button-go" @click="$emit('button-confirm-park')">是</BaseButton>
-        <BaseButton class="button button-back" @click="$emit('button-mark-parked')"
-          >車位已有車</BaseButton
-        >
-        <BaseButton outline class="button button-back" @click="$emit('button-cancel-park')"
-          >取消</BaseButton
-        >
+        <BaseButton class="button button-back" @click="$emit('button-mark-parked')">車位已有車</BaseButton>
+        <BaseButton outline class="button button-back" @click="$emit('button-cancel-park')">取消</BaseButton>
       </div>
     </div>
     <!-- 停車位置備註 -->
     <div v-else-if="isParkLocationMemo" class="container">
       <h2 class="text-2xl w-full p-2 text-center">停車位置備註</h2>
-      <BaseInput v-model="parkMemo" class="memo-input" placeholder="ex. 車位號碼如 A123 等" />
+      <BaseInput v-model="parkMemo" class="memo-input" placeholder="ex. 車位號碼如 A123 等"/>
       <div class="button-set">
         <BaseButton class="button" @click="$emit('button-set-memo', parkMemo)">確認</BaseButton>
         <BaseButton outline class="button" @click="$emit('button-set-memo', '')">跳過</BaseButton>
@@ -182,16 +169,14 @@ const formattedTime = (time: number) => {
       </div>
       <div class="button-set">
         <BaseButton
-          class="button"
-          @click="$emit('button-set-timer', parkTimer, false, true, props.parkName)"
-          >確認</BaseButton
-        >
+            class="button"
+            @click="$emit('button-set-timer', parkTimer, false, true, props.parkName)"
+        >確認</BaseButton>
         <BaseButton
-          outline
-          class="button"
-          @click="$emit('button-set-timer', 0, false, false, props.parkName)"
-          >跳過</BaseButton
-        >
+            outline
+            class="button"
+            @click="$emit('button-set-timer', 0, false, false, props.parkName)"
+        >跳過</BaseButton>
       </div>
     </div>
     <!-- 停車計時 -->
@@ -199,16 +184,14 @@ const formattedTime = (time: number) => {
       <h2 class="text-2xl w-full p-2 text-center">停車計時</h2>
       <div class="flex justify-center">
         <span :class="timerTextColor" class="text-xl font-bold pb-1">
-          {{ formattedTime(Math.floor(parkCountup / 60)) /* 傳分鐘進去 */ }}
+          {{ formattedTime(Math.floor(parkCountUp / 60)) /* 傳分鐘進去 */ }}
         </span>
-        <span class="text-grey-500 text-xl font-bold"
-          >/{{ formattedTime(props.maxTime ?? 0) }}</span
-        >
+        <span class="text-grey-500 text-xl font-bold">
+          /{{ formattedTime(props.maxTime ?? 0) }}
+        </span>
       </div>
       <div class="text-center pb-2">
-        <span class="text-lg text-center"
-          >已累計金額：{{ pricePerHour * Math.ceil(parkCountup / 3600) }}元</span
-        >
+        <span class="text-lg text-center">已累計金額：{{ pricePerHour * Math.ceil(parkCountUp / 3600) }}元</span>
       </div>
       <div class="button-set">
         <BaseButton class="button button-go" @click="$emit('button-leave')">離開</BaseButton>

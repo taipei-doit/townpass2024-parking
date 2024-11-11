@@ -10,8 +10,7 @@ export default function calcCrow(lat1: number, lon1: number, lat2: number, lon2:
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = R * c;
-  return d.toFixed(2);
+  return R * c;
 }
 
 // Converts numeric degrees to radians
