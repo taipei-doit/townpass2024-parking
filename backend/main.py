@@ -110,4 +110,4 @@ if __name__ == "__main__":
     ssl_keyfile=os.getenv("SSL_KEYFILE")
     ssl_certfile=os.getenv("SSL_CERTFILE")
     ssl_password=os.getenv("SSL_PASSWORD")
-    uvicorn.run(app, host="localhost", port=8000, ssl_keyfile=ssl_keyfile, ssl_certfile=ssl_certfile, ssl_keyfile_password=ssl_password)
+    uvicorn.run(app, host="localhost", port=25569, ssl_keyfile=ssl_keyfile, ssl_certfile=ssl_certfile, ssl_keyfile_password=ssl_password)

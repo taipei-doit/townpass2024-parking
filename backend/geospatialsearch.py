@@ -2,6 +2,7 @@ import geopandas as gpd
 from shapely.geometry import Point, LineString, MultiLineString
 from shapely.strtree import STRtree
 
+
 class GeoSpatialSearch:
     def __init__(self):
         """
@@ -10,7 +11,7 @@ class GeoSpatialSearch:
         Create an STRtree spatial index
         """
         # Read the shapefile and build the GeoDataFrame
-        self.gdf = gpd.read_file("C:\\Users\\User\\townpass2024-parking\\backend\\raw_data_from_platform\\noparkin_202407121525.shp")
+        self.gdf = gpd.read_file("raw_data_from_platform\\noparkin_202407121525.shp")
 
         # Check the CRS and ensure it is WGS 84 (EPSG:4326)
         if self.gdf.crs != "EPSG:4326":
@@ -69,8 +70,8 @@ class GeoSpatialSearch:
                 row = self.gdf.iloc[idx]
                 coordinates = list(geom.coords) if geom.geom_type == 'LineString' else [list(line.coords) for line in geom.geoms]
                 result_list.append({
-                    "coordinates": coordinates,
-                    "patype": row['patype']
+                    "coord": coordinates,
+                    "t": int(row['patype']) if row['patype'] is not None else 2
                 })
         return result_list
 
