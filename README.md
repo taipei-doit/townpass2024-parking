@@ -4,7 +4,7 @@
 
 ## Important Notes
 ### Frontend:
-- We use mapbox API which can directly put in _____.
+- We use mapbox API which can directly put in `./web/.env`.
 - We design a temporary logo from picture online which are uploaded to the index of this repo.
 ![ParkFlow Preview](https://raw.githubusercontent.com/vaclisinc/vaclis-TownPass/3bb54814c2583cefa2d54191647f1b5304eef8fe/assets/image/ParkFlow_.png)
 
