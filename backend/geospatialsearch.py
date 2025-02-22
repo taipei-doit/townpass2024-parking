@@ -1,4 +1,5 @@
 import geopandas as gpd
+import os
 from shapely.geometry import Point, LineString, MultiLineString
 from shapely.strtree import STRtree
 
@@ -11,7 +12,7 @@ class GeoSpatialSearch:
         Create an STRtree spatial index
         """
         # Read the shapefile and build the GeoDataFrame
-        self.gdf = gpd.read_file("raw_data_from_platform\\noparkin_202407121525.shp")
+        self.gdf = gpd.read_file(os.path.join("raw_data_from_platform", "noparkin_202407121525.shp"))
 
         # Check the CRS and ensure it is WGS 84 (EPSG:4326)
         if self.gdf.crs != "EPSG:4326":
